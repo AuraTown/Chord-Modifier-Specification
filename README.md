@@ -2,6 +2,96 @@
 # Chord Modifier Specification
 
 
+
+
+# Individual Chord Modifiers Reference
+
+## Basic Quality Modifiers
+| Symbol | AffectedRole | Operation | Category  | Requires | Conflicts    | Aliases |
+|--------|--------------|-----------|-----------|----------|--------------|---------|
+| m      | third        | -1        | quality   | none     | maj,sus,dim  | min, -  |
+| dim    | fifth        | -1        | quality   | m        | aug          | o, °    |
+| aug    | fifth        | +1        | quality   | M3       | dim          | +       |
+
+## Suspension Modifiers
+| Symbol | AffectedRole | Operation  | Category    | Requires | Conflicts    | Aliases |
+|--------|--------------|------------|-------------|----------|--------------|---------|
+| sus4   | third        | replace_4  | suspension  | none     | m,maj,2      | sus     |
+| sus2   | third        | replace_2  | suspension  | none     | m,maj,4      | 2       |
+
+## Seventh Extensions
+| Symbol | AffectedRole | Operation | Category   | Requires | Conflicts     | Aliases |
+|--------|--------------|-----------|------------|----------|---------------|---------|
+| 7      | seventh      | add,-1    | extension  | M3       | maj7          | dom     |
+| maj7   | seventh      | add,0     | extension  | M3       | 7             | Δ, M7   |
+| ø      | fifth,seventh| -1,-1     | extension  | m        | dim7,m7       | m7b5    |
+
+## Add Modifiers
+| Symbol | AffectedRole | Operation | Category | Requires | Conflicts | Aliases |
+|--------|--------------|-----------|----------|----------|-----------|---------|
+| add9   | ninth        | add,0     | addition | none     | 9         | add2    |
+| add11  | eleventh     | add,0     | addition | none     | 11        | none    |
+| add13  | thirteenth   | add,0     | addition | none     | 13        | add6    |
+| 6      | sixth        | add,0     | addition | none     | 13,m6     | add13   |
+| m6     | sixth        | add,0     | addition | m        | 13,6      | madd13  |
+
+## Alteration Modifiers
+| Symbol | AffectedRole | Operation | Category   | Requires | Conflicts | Aliases |
+|--------|--------------|-----------|------------|----------|-----------|---------|
+| ♭5     | fifth        | -1        | alteration | none     | ♯5        | -5      |
+| ♯5     | fifth        | +1        | alteration | none     | ♭5        | +5      |
+| ♭9     | ninth        | -1        | alteration | 7        | ♯9        | -9      |
+| ♯9     | ninth        | +1        | alteration | 7        | ♭9        | +9      |
+| ♯11    | eleventh     | +1        | alteration | 7        | none      | +11     |
+| ♭13    | thirteenth   | -1        | alteration | 7        | none      | -13     |
+
+## Implementation Rules:
+
+1. Operation Types:
+   - -1: Lower by semitone
+   - +1: Raise by semitone
+   - add,X: Add note at interval X
+   - replace_X: Replace with interval X
+
+2. Validation Rules:
+   - Only one modifier per AffectedRole allowed
+   - Check Requires before applying modifier
+   - Check Conflicts with existing modifiers
+   - Category restrictions:
+     - Only one quality modifier at a time
+     - Suspensions exclude quality modifiers
+     - Alterations require their base interval
+
+3. Processing Order:
+   1. Quality modifiers
+   2. Suspensions
+   3. Extensions
+   4. Additions
+   5. Alterations
+
+4. Special Cases:
+   - Dim affects both third and fifth when used as quality
+   - Half-diminished (ø) combines minor and b5
+   - Some modifiers add notes instead of modifying existing ones
+
+## Common Combinations:
+- m7: m + 7
+- maj7: maj + maj7
+- 9: 7 + add9
+- 13: 7 + add13
+- 7♭9: 7 + ♭9
+- m7♭5: m + ø
+
+## Notes:
+- "Requires" field ensures logical combinations
+- "Conflicts" prevents incompatible modifiers
+- Operations assume standard major chord as base
+- Add operations don't remove existing notes
+- Replace operations substitute for existing notes
+
+
+-----
+
 # Basic Chord Qualities Reference Table
 
 | Symbol | Intervals          | Semitones  | Category    | Optional | Common Notation |
