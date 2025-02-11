@@ -1,6 +1,67 @@
  
 # Chord Modifier Specification
 
+
+# Basic Chord Qualities Reference Table
+
+| Symbol | Intervals          | Semitones  | Category    | Optional | Common Notation |
+|--------|-------------------|------------|-------------|----------|-----------------|
+| maj    | R, M3, P5         | [0,4,7]    | Major      | (5)      | M, Δ, none     |
+| m      | R, m3, P5         | [0,3,7]    | Minor      | (5)      | min, -         |
+| dim    | R, m3, d5         | [0,3,6]    | Diminished | none     | °, o           |
+| aug    | R, M3, A5         | [0,4,8]    | Augmented  | none     | +              |
+| sus4   | R, P4, P5         | [0,5,7]    | Suspended  | (5)      | sus            |
+| sus2   | R, M2, P5         | [0,2,7]    | Suspended  | (5)      | none           |
+| 5      | R, P5             | [0,7]      | Power      | none     | (no 3rd)       |
+
+# Extensions Table
+
+| Symbol | Intervals          | Semitones     | Category   | Optional    | Common Notation |
+|--------|-------------------|---------------|------------|-------------|-----------------|
+| 7      | R, M3, P5, m7     | [0,4,7,10]    | Dominant   | (5)         | dom            |
+| maj7   | R, M3, P5, M7     | [0,4,7,11]    | Major      | (5)         | Δ7, M7         |
+| m7     | R, m3, P5, m7     | [0,3,7,10]    | Minor      | (5)         | min7, -7       |
+| dim7   | R, m3, d5, d7     | [0,3,6,9]     | Diminished | none        | °7             |
+| m7b5   | R, m3, d5, m7     | [0,3,6,10]    | Half-Dim   | none        | ø              |
+| mM7    | R, m3, P5, M7     | [0,3,7,11]    | Minor-Maj  | (5)         | m/maj7, -Δ7    |
+
+# Add Table
+
+| Symbol  | Intervals         | Semitones     | Category   | Optional    | Common Notation |
+|---------|------------------|---------------|------------|-------------|-----------------|
+| add9    | R, M3, P5, M9    | [0,4,7,14]    | Addition   | (5)         | add2           |
+| add11   | R, M3, P5, P11   | [0,4,7,17]    | Addition   | (5)         | none           |
+| add13   | R, M3, P5, M13   | [0,4,7,21]    | Addition   | (5)         | add6           |
+| 6       | R, M3, P5, M6    | [0,4,7,9]     | Addition   | (5)         | add13          |
+| m6      | R, m3, P5, M6    | [0,3,7,9]     | Addition   | (5)         | madd13         |
+
+## Implementation Notes:
+
+1. Categories help validate combinations:
+   - Only one quality modifier allowed at a time
+   - Suspended chords cannot have thirds
+   - Power chords exclude thirds
+
+2. Optional notes:
+   - (5) indicates fifth can be omitted
+   - Fifth is never optional in power chords
+   - Fifth is never optional in diminished/augmented chords
+
+3. Interval representations:
+   - R = Root
+   - m3 = minor third
+   - M3 = major third
+   - P4 = perfect fourth
+   - P5 = perfect fifth
+   - m7 = minor seventh
+   - M7 = major seventh
+
+4. Converting between representations:
+   - Semitones array useful for computational purposes
+   - Intervals useful for theoretical analysis
+   - Both should be maintained for completeness
+  
+
 ## Operation Types
 
 ### Semitone Modifications
