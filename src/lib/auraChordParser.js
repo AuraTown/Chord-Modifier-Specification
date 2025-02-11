@@ -7,104 +7,72 @@ import { chordModifiers } from "../../data/chordModifiers.js";
  * 3. Grouping patterns by category for validation
  */
 function prepareModifierPatterns(modifiers) {
-  // Group all possible symbols and aliases for each modifier
+  console.log("🔧 Preparing modifier patterns...");
+
   const patternsWithMetadata = modifiers.flatMap((modifier) => {
-    // Create patterns from both the main symbol and all aliases
     const allSymbols = [
       modifier.Symbol,
       ...(modifier.Aliases?.split(",") || []),
-    ];
+    ].map((s) => s.trim());
+
+    console.log(`\n📝 Processing modifier: ${modifier.Symbol}`);
+    console.log(`   Category: ${modifier.Category}`);
+    console.log(`   Affects: ${modifier.AffectedRole}`);
+    console.log(`   Aliases: ${allSymbols.join(", ")}`);
+    console.log(`   Operation: ${modifier.Operation}`);
+
+    if (modifier.Requires) {
+      console.log(`   Requirements: ${modifier.Requires}`);
+    }
+    if (modifier.Conflicts) {
+      console.log(`   Conflicts: ${modifier.Conflicts}`);
+    }
 
     return allSymbols.map((symbol) => ({
-      // Escape special regex characters and create pattern
       pattern: new RegExp(
         `^${symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
         "i"
       ),
       length: symbol.length,
-      // Keep all original modifier metadata for later use
       metadata: modifier,
     }));
   });
 
-  // Sort by length (descending) to ensure longest matches are tried first
-  return patternsWithMetadata.sort((a, b) => b.length - a.length);
+  const sortedPatterns = patternsWithMetadata.sort(
+    (a, b) => b.length - a.length
+  );
+  console.log("\n📊 Pattern Summary:");
+  console.table(
+    sortedPatterns.map((p) => ({
+      pattern: p.pattern.toString(),
+      length: p.length,
+      category: p.metadata.Category,
+      affects: p.metadata.AffectedRole,
+      operation: p.metadata.Operation,
+    }))
+  );
+
+  return sortedPatterns;
 }
 
 /**
- * Parses a chord symbol into its constituent parts using the provided modifier rules.
- * Example: "Cmaj7" → { root: "C", modifiers: [...] }
- */
-const parseChordSymbolInternal = function (chordSymbol, patterns) {
-  // First extract the root note (A-G with optional sharp/flat)
-
-  const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
-  if (!rootMatch) {
-    throw new Error("Invalid chord: missing root note");
-  }
-
-  const root = rootMatch[0];
-  let remaining = chordSymbol.slice(root.length);
-  const modifiers = [];
-
-  // Keep track of used categories and affected roles for validation
-  const usedCategories = new Set();
-  const affectedRoles = new Set();
-
-  // Main parsing loop - continue until no text remains
-  while (remaining.length > 0) {
-    let matchFound = false;
-
-    // Try each pattern in order (longest first)
-    for (const { pattern, metadata } of patterns) {
-      const match = remaining.match(pattern);
-      if (match) {
-        // Validate this modifier against what we've already collected
-        validateNewModifier(metadata, usedCategories, affectedRoles);
-
-        // Store the modifier with its complete metadata
-        modifiers.push({
-          type: metadata.Symbol,
-          category: metadata.Category,
-          role: metadata.AffectedRole,
-          operation: metadata.Operation,
-          requirements: metadata.Requires,
-        });
-
-        // Update our tracking sets
-        usedCategories.add(metadata.Category);
-        if (Array.isArray(metadata.AffectedRole)) {
-          metadata.AffectedRole.forEach((role) => affectedRoles.add(role));
-        } else {
-          affectedRoles.add(metadata.AffectedRole);
-        }
-
-        // Remove the matched portion and continue
-        remaining = remaining.slice(match[0].length);
-        matchFound = true;
-        break;
-      }
-    }
-
-    if (!matchFound) {
-      throw new Error(`Unrecognized modifier in chord: ${remaining}`);
-    }
-  }
-
-  // Verify all required modifiers are present
-  validateRequirements(modifiers);
-
-  return { root, modifiers };
-};
-
-/**
- * Validates that a new modifier can be added given what's already been collected.
- * Throws errors for invalid combinations.
+ * Validates that a new modifier can be combined with existing ones
+ * @param {Object} modifier - The new modifier to validate
+ * @param {Set} usedCategories - Categories already present in the chord
+ * @param {Set} affectedRoles - Chord roles already modified
  */
 function validateNewModifier(modifier, usedCategories, affectedRoles) {
-  // Check category conflicts
+  console.log(`\n🔍 Validating new modifier: ${modifier.Symbol}`);
+  console.log("   Current state:");
+  console.table({
+    currentCategories: Array.from(usedCategories),
+    currentRoles: Array.from(affectedRoles),
+  });
+
+  // Check quality/suspension conflicts
   if (modifier.Category === "quality" || modifier.Category === "suspension") {
     if (usedCategories.has("quality") || usedCategories.has("suspension")) {
+      console.error("❌ Quality/suspension conflict detected!");
       throw new Error(
         `Cannot combine ${modifier.Symbol} with existing quality/suspension modifiers`
       );
@@ -115,160 +83,254 @@ function validateNewModifier(modifier, usedCategories, affectedRoles) {
   if (Array.isArray(modifier.AffectedRole)) {
     for (const role of modifier.AffectedRole) {
       if (affectedRoles.has(role)) {
+        console.error(`❌ Role conflict detected for: ${role}`);
         throw new Error(`Conflicting modifiers for ${role}`);
       }
     }
   } else if (affectedRoles.has(modifier.AffectedRole)) {
+    console.error(`❌ Role conflict detected for: ${modifier.AffectedRole}`);
     throw new Error(`Conflicting modifiers for ${modifier.AffectedRole}`);
   }
 
-  // Check explicit conflicts from the rules
+  // Check explicit conflicts
   if (modifier.Conflicts) {
-    const conflicts = modifier.Conflicts.split(",");
+    const conflicts = modifier.Conflicts.split(",").map((c) => c.trim());
+    console.log(`   Checking conflicts: ${conflicts.join(", ")}`);
     if (conflicts.some((conflict) => usedCategories.has(conflict))) {
+      console.error("❌ Category conflict detected!");
       throw new Error(`Invalid combination with ${modifier.Symbol}`);
     }
   }
+
+  console.log("✅ Modifier validation passed");
 }
 
 /**
- * Verifies that all required modifiers are present for the given combination.
- * Example: ♯11 requires a seventh chord.
+ * Verifies that all required modifiers are present
+ * @param {Array} modifiers - Array of parsed modifiers
  */
 function validateRequirements(modifiers) {
+  console.log("\n🔍 Validating modifier requirements");
+
   for (const modifier of modifiers) {
     if (modifier.requirements) {
-      const required = modifier.requirements.split(",");
+      const required = modifier.requirements.split(",").map((r) => r.trim());
+      console.log(
+        `   Checking requirements for ${modifier.type}: ${required.join(", ")}`
+      );
+
       for (const req of required) {
-        if (
-          !modifiers.some((mod) => mod.type === req || mod.category === req)
-        ) {
+        const hasRequirement = modifiers.some(
+          (mod) => mod.type === req || mod.category === req
+        );
+
+        if (!hasRequirement) {
+          console.error(`❌ Missing requirement: ${req} for ${modifier.type}`);
           throw new Error(`${modifier.type} requires ${req} to be present`);
         }
+        console.log(`   ✅ Requirement satisfied: ${req}`);
       }
     }
   }
+  console.log("✅ All requirements validated successfully");
 }
 
-/////
-
 /**
- * Converts a semitone number to an interval name
- * e.g., 4 -> "M3" (major third), 3 -> "m3" (minor third)
+ * Internal function to parse a chord symbol into its components
+ * @param {string} chordSymbol - The chord symbol to parse
+ * @param {Array} patterns - Prepared modifier patterns
+ * @returns {Object} Parsed chord structure
  */
-const semitonesToInterval = {
-  0: "P1", // Perfect unison
-  1: "m2", // Minor second
-  2: "M2", // Major second
-  3: "m3", // Minor third
-  4: "M3", // Major third
-  5: "P4", // Perfect fourth
-  6: "TT", // Tritone
-  7: "P5", // Perfect fifth
-  8: "m6", // Minor sixth
-  9: "M6", // Major sixth
-  10: "m7", // Minor seventh
-  11: "M7", // Major seventh
-  12: "P8", // Perfect octave
-};
+function parseChordSymbolInternal(chordSymbol, patterns) {
+  console.log(`\n🎼 ----------------------------------------`);
+  console.log(`\n🎼 Parsing chord symbol: "${chordSymbol}"`);
+
+  // Extract root note
+  const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
+  if (!rootMatch) {
+    console.error("❌ No valid root note found!");
+    throw new Error("Invalid chord: missing root note");
+  }
+
+  const root = rootMatch[0];
+  console.log(`🎵 Root note: ${root}`);
+
+  let remaining = chordSymbol.slice(root.length);
+  console.log(`📝 Remaining to parse: "${remaining}"`);
+
+  const modifiers = [];
+  const usedCategories = new Set();
+  const affectedRoles = new Set();
+
+  // Parse remaining modifiers
+  while (remaining.length > 0) {
+    console.log(`\n🔍 Analyzing remaining portion: "${remaining}"`);
+    let matchFound = false;
+
+    for (const { pattern, metadata } of patterns) {
+      const match = remaining.match(pattern);
+      if (match) {
+        console.log(`✅ Found match: "${match[0]}" (${metadata.Category})`);
+        console.log(`   Symbol: ${metadata.Symbol}`);
+        console.log(`   Affects: ${metadata.AffectedRole}`);
+        console.log(`   Operation: ${metadata.Operation}`);
+
+        try {
+          validateNewModifier(metadata, usedCategories, affectedRoles);
+
+          modifiers.push({
+            type: metadata.Symbol,
+            category: metadata.Category,
+            role: metadata.AffectedRole,
+            operation: metadata.Operation,
+            requirements: metadata.Requires,
+          });
+
+          console.log("✨ Modifier validated and added successfully");
+          console.log("📊 Current state:");
+          console.table({
+            usedCategories: Array.from(usedCategories),
+            affectedRoles: Array.from(affectedRoles),
+          });
+
+          // Update tracking sets
+          usedCategories.add(metadata.Category);
+          if (Array.isArray(metadata.AffectedRole)) {
+            metadata.AffectedRole.forEach((role) => affectedRoles.add(role));
+          } else {
+            affectedRoles.add(metadata.AffectedRole);
+          }
+
+          remaining = remaining.slice(match[0].length);
+          matchFound = true;
+          break;
+        } catch (error) {
+          console.warn(`⚠️ Validation failed: ${error.message}`);
+          throw error;
+        }
+      }
+    }
+
+    if (!matchFound) {
+      console.error(`❌ No valid modifier found for: "${remaining}"`);
+      throw new Error(`Unrecognized modifier in chord: ${remaining}`);
+    }
+  }
+
+  console.log("\n🔍 Validating final requirements...");
+  validateRequirements(modifiers);
+
+  console.log("\n✅ Final parsed chord structure:");
+  console.table({
+    root,
+    modifiers: modifiers.map((m) => `${m.type} (${m.category})`),
+  });
+
+  return { root, modifiers };
+}
 
 /**
- * Base intervals for a major chord (relative to root)
- * These get modified based on chord quality and modifiers
- */
-const baseIntervals = {
-  root: 0, // Root note (always present)
-  third: 4, // Major third
-  fifth: 7, // Perfect fifth
-  seventh: 11, // Major seventh
-  ninth: 14, // Major ninth (compound interval)
-  eleventh: 17, // Perfect eleventh
-  thirteenth: 21, // Major thirteenth
-};
-
-/**
- * Computes the detailed structure of a chord based on its root and modifiers
- * @param {Object} chordObject - Contains root note and array of modifiers
- * @returns {Object} Detailed chord information including intervals
+ * Computes detailed chord structure including intervals
+ * @param {Object} chordObject - Parsed chord object
+ * @returns {Object} Detailed chord information
  */
 function getChordDetails(chordObject) {
-  // Start with a copy of base intervals
-  let intervals = { ...baseIntervals };
+  console.log("\n🎵 Computing chord details");
+  console.log("   Input:", JSON.stringify(chordObject, null, 2));
 
-  // Track which roles are actually used in the chord
+  let intervals = { ...baseIntervals };
   const activeRoles = new Set(["root"]);
 
-  // First pass: Apply quality modifiers to establish basic chord structure
+  console.log("\n📊 Initial intervals:");
+  console.table(intervals);
+
+  // Apply quality modifiers
   const qualityMod = chordObject.modifiers.find(
     (m) => m.category === "quality"
   );
   if (qualityMod) {
-    if (Array.isArray(qualityMod.AffectedRole)) {
-      qualityMod.AffectedRole.forEach((role, idx) => {
-        intervals[role] += qualityMod.Operation[idx];
+    console.log(`\n🔧 Applying quality modifier: ${qualityMod.type}`);
+    if (Array.isArray(qualityMod.role)) {
+      qualityMod.role.forEach((role, idx) => {
+        const op = Array.isArray(qualityMod.operation)
+          ? qualityMod.operation[idx]
+          : qualityMod.operation;
+        console.log(`   Modifying ${role} by ${op}`);
+        intervals[role] += op;
         activeRoles.add(role);
       });
     } else {
-      intervals[qualityMod.AffectedRole] += qualityMod.Operation;
-      activeRoles.add(qualityMod.AffectedRole);
+      console.log(`   Modifying ${qualityMod.role} by ${qualityMod.operation}`);
+      intervals[qualityMod.role] += qualityMod.operation;
+      activeRoles.add(qualityMod.role);
     }
   } else {
-    // If no quality modifier, assume major
+    console.log("   No quality modifier - assuming major triad");
     activeRoles.add("third");
     activeRoles.add("fifth");
   }
 
-  // Handle suspensions (these replace the third)
+  // Handle suspensions
   const susModifier = chordObject.modifiers.find(
     (m) => m.category === "suspension"
   );
   if (susModifier) {
+    console.log(`\n🔧 Applying suspension: ${susModifier.type}`);
     activeRoles.delete("third");
-    if (susModifier.Operation === "replace_4") {
+    if (susModifier.operation === "replace_4") {
       intervals.third = 5; // Perfect fourth
-    } else if (susModifier.Operation === "replace_2") {
+    } else if (susModifier.operation === "replace_2") {
       intervals.third = 2; // Major second
     }
     activeRoles.add("third");
   }
 
-  // Handle extensions (7ths)
+  // Apply extensions
   const extensionMod = chordObject.modifiers.find(
     (m) => m.category === "extension"
   );
   if (extensionMod) {
-    const [operation, value] = extensionMod.Operation.split(",");
+    console.log(`\n🔧 Applying extension: ${extensionMod.type}`);
+    const [operation, value] = extensionMod.operation.split(",");
     if (operation === "add") {
       intervals.seventh += parseInt(value);
       activeRoles.add("seventh");
     }
   }
 
-  // Handle additions (add9, add11, etc.)
+  // Handle additions
   const addModifiers = chordObject.modifiers.filter(
     (m) => m.category === "addition"
   );
-  for (const mod of addModifiers) {
-    activeRoles.add(mod.AffectedRole);
+  if (addModifiers.length > 0) {
+    console.log("\n🔧 Applying additions:");
+    for (const mod of addModifiers) {
+      console.log(`   Adding ${mod.role}`);
+      activeRoles.add(mod.role);
+    }
   }
 
-  // Finally, apply alterations (♭5, ♯9, etc.)
+  // Apply alterations
   const alterationMods = chordObject.modifiers.filter(
     (m) => m.category === "alteration"
   );
-  for (const mod of alterationMods) {
-    intervals[mod.AffectedRole] += mod.Operation;
-    activeRoles.add(mod.AffectedRole);
+  if (alterationMods.length > 0) {
+    console.log("\n🔧 Applying alterations:");
+    for (const mod of alterationMods) {
+      console.log(`   Modifying ${mod.role} by ${mod.operation}`);
+      intervals[mod.role] += mod.operation;
+      activeRoles.add(mod.role);
+    }
   }
 
-  // Convert semitones to interval names, but only for active roles
+  // Convert semitones to interval names
   const intervalNames = {};
   for (const role of activeRoles) {
-    const semitones = intervals[role] % 12; // Normalize to within an octave
+    const semitones = intervals[role] % 12;
     intervalNames[role] = semitonesToInterval[semitones];
   }
 
-  return {
+  const result = {
     root: chordObject.root,
     intervals: intervalNames,
     semitones: Object.fromEntries(
@@ -276,6 +338,26 @@ function getChordDetails(chordObject) {
     ),
     modifiers: chordObject.modifiers,
   };
+
+  console.log("\n✨ Final chord details:");
+  console.table(result);
+
+  return result;
+}
+
+// Cache for default patterns
+let DEFAULT_PATTERNS = [];
+
+/**
+ * Gets or creates default modifier patterns
+ * @returns {Array} Prepared modifier patterns
+ */
+function getDefaultPatterns() {
+  if (DEFAULT_PATTERNS.length === 0) {
+    console.log("🔄 Initializing default patterns");
+    DEFAULT_PATTERNS = prepareModifierPatterns(chordModifiers);
+  }
+  return DEFAULT_PATTERNS;
 }
 
 /////
