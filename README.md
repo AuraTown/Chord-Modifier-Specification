@@ -92,7 +92,8 @@
 
 
 # Js logic - using the table 
-```
+
+```js
 import { chordModifiers } from './modifierRules';
 
 /**
@@ -256,7 +257,7 @@ try {
 
 # Pseudocode - witout using the table - to show how it works
 
-```
+```js
 function parseChordSymbol(chordSymbol) {
     // First extract the root note (A-G with optional sharp/flat)
     const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
