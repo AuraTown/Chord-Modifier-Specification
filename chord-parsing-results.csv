@@ -1,0 +1,31 @@
+Input Chord,Enkeli Match,Custom Parse,Tonal.js Result
+Cmaj,[object Object],[object Object],0·4·7
+CM,error + ,[object Object],0·4·7
+Cmaj7,[object Object],[object Object],0·4·7·11
+CM7,error + ,[object Object],0·4·7·11
+Cmaj9,[object Object],[object Object],0·4·7·11·14
+Cmaj11,[object Object],[object Object],
+Cmaj13,[object Object],[object Object],0·4·7·11·14·21
+Cm,error + ,[object Object],0·3·7
+Cmin,[object Object],[object Object],0·3·7
+Cm7,error + ,[object Object],0·3·7·10
+Cmin7,[object Object],[object Object],0·3·7·10
+Cm9,error + ,[object Object],0·3·7·10·14
+Cm11,error + ,[object Object],0·3·7·10·14·17
+Cm13,error + ,[object Object],0·3·7·10·14·21
+C7,[object Object],[object Object],0·4·7·10
+C9,[object Object],[object Object],0·4·7·10·14
+C11,[object Object],[object Object],0·7·10·14·17
+C13,[object Object],[object Object],0·4·7·10·14·21
+C7b9,[object Object],[object Object],0·4·7·10·13
+C7#9,[object Object],[object Object],0·4·7·10·15
+Caug,[object Object],[object Object],0·4·8
+C+,error + ,[object Object],0·4·8
+Cdim,error + ,[object Object],0·3·6
+C°,[object Object],[object Object],0·3·6
+Cm7b5,error + ,[object Object],0·3·6·10
+C∅,error + ,[object Object],
+C6/9,error + ,[object Object],0·4·7·9·14
+C6add9,[object Object],[object Object],0·4·7·9·14
+Cmaj7#11,error + ,[object Object],0·4·7·11·18
+C7alt,error + ,[object Object],0·4·8·10·15

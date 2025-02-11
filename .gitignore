@@ -1,0 +1,30 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+DEV.md
+src/gumroad.md
+DEV/client_secret_813439585493-lkl9h0pen2jt00gunj6623921odbb2bs.apps.googleusercontent.com.json
+NOTES_jan2025.md
+DOMAINdotMusic.md

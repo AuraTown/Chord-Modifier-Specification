@@ -1,0 +1,16 @@
+{
+  "name": "chords-modifiers",
+  "type": "module",
+  "version": "0.0.1",
+  "website": "https://github.com/AuraTown/Chord-Modifier-Specification/",
+  "private": true,
+  "dependencies": {
+    "@tonaljs/chord": "^6.1.1",
+    "csv-writer": "^1.6.0",
+    "tonal": "^6.4.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "compare": "node scripts/compare.js"
+  }
+}
