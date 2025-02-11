@@ -75,14 +75,45 @@ const namedIntervalSemitones = {
   "14m": 22, // Minor fourteenth
   "14M": 23, // Major fourteenth
   "15P": 24, // Perfect double octave
+
+  // oter notation  "R": "1P",    // Root/unison
+  R: 0, // Root/unison
+  "♭2": 1, // Minor second
+  2: 2, // Major second
+  "♭3": 3, // Minor third
+  3: 4, // Major third
+  4: 5, // Perfect fourth
+  "♯4": 6, // Augmented fourth
+  "♭5": 6, // Diminished fifth
+  5: 7, // Perfect fifth
+  "♯5": 8, // Augmented fifth
+  "♭6": 8, // Minor sixth
+  6: 9, // Major sixth
+  "♭7": 10, // Minor seventh
+  7: 11, // Major seventh
+  8: 12, // Perfect octave
+  "♭9": 13, // Minor ninth
+  9: 14, // Major ninth
+  "♯9": 15, // Augmented ninth
+  "♭10": 15, // Minor tenth
+  10: 16, // Major tenth
+  11: 17, // Perfect eleventh
+  "♯11": 18, // Augmented eleventh
+  "♭12": 18, // Diminished twelfth
+  12: 19, // Perfect twelfth
+  "♭13": 20, // Minor thirteenth
+  13: 21, // Major thirteenth
+  "♭14": 22, // Minor fourteenth
+  14: 23, // Major fourteenth
+  15: 24, // Perfect double octave
 };
 function parseTonalChord(c) {
   let x = Chord.chord(c);
-  console.log(x);
+  //console.log(x);
   let i = x.intervals;
-  console.log(i);
+  ///console.log(i);
   let semi = i.map((x) => namedIntervalSemitones[x]);
-  console.log(semi);
+  // console.log(semi);
   return semi; //  .join("·");
 }
 
@@ -95,11 +126,16 @@ function parseEnkerliChord(c) {
     let remaining = c.slice(root.length);
     let data = enkerliQualities[remaining];
 
+    console.log(data);
+    if (!data) return "🤷 ";
     let i = data.intervals;
+
     let semi = i.map((x) => namedIntervalSemitones[x]);
+    console.log(i, semi);
+    return semi;
     return data;
   } catch (e) {
-    return "error + ";
+    return "error + " + e;
   }
 }
 

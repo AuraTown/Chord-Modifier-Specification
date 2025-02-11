@@ -1,31 +1,31 @@
 Input Chord,Enkeli Match,Custom Parse,Tonal.js Result
-Cmaj,[object Object],[object Object],0·4·7
-CM,error + ,[object Object],0·4·7
-Cmaj7,[object Object],[object Object],0·4·7·11
-CM7,error + ,[object Object],0·4·7·11
-Cmaj9,[object Object],[object Object],0·4·7·11·14
-Cmaj11,[object Object],[object Object],
-Cmaj13,[object Object],[object Object],0·4·7·11·14·21
-Cm,error + ,[object Object],0·3·7
-Cmin,[object Object],[object Object],0·3·7
-Cm7,error + ,[object Object],0·3·7·10
-Cmin7,[object Object],[object Object],0·3·7·10
-Cm9,error + ,[object Object],0·3·7·10·14
-Cm11,error + ,[object Object],0·3·7·10·14·17
-Cm13,error + ,[object Object],0·3·7·10·14·21
-C7,[object Object],[object Object],0·4·7·10
-C9,[object Object],[object Object],0·4·7·10·14
-C11,[object Object],[object Object],0·7·10·14·17
-C13,[object Object],[object Object],0·4·7·10·14·21
-C7b9,[object Object],[object Object],0·4·7·10·13
-C7#9,[object Object],[object Object],0·4·7·10·15
-Caug,[object Object],[object Object],0·4·8
-C+,error + ,[object Object],0·4·8
-Cdim,error + ,[object Object],0·3·6
-C°,[object Object],[object Object],0·3·6
-Cm7b5,error + ,[object Object],0·3·6·10
-C∅,error + ,[object Object],
-C6/9,error + ,[object Object],0·4·7·9·14
-C6add9,[object Object],[object Object],0·4·7·9·14
-Cmaj7#11,error + ,[object Object],0·4·7·11·18
-C7alt,error + ,[object Object],0·4·8·10·15
+Cmaj,0·4·7,[object Object],0·4·7
+CM,🤷 ,[object Object],0·4·7
+Cmaj7,0·4·7·11,[object Object],0·4·7·11
+CM7,🤷 ,[object Object],0·4·7·11
+Cmaj9,0·4·7·11·14,[object Object],0·4·7·11·14
+Cmaj11,0·4·7·11·14·17,[object Object],
+Cmaj13,0·4·7·11·14·17·21,[object Object],0·4·7·11·14·21
+Cm,🤷 ,[object Object],0·3·7
+Cmin,0·3·7,[object Object],0·3·7
+Cm7,🤷 ,[object Object],0·3·7·10
+Cmin7,0·3·7·10,[object Object],0·3·7·10
+Cm9,🤷 ,[object Object],0·3·7·10·14
+Cm11,🤷 ,[object Object],0·3·7·10·14·17
+Cm13,🤷 ,[object Object],0·3·7·10·14·21
+C7,0·4·7·10,[object Object],0·4·7·10
+C9,0·4·7·10·14,[object Object],0·4·7·10·14
+C11,0·4·7·10·14·17,[object Object],0·7·10·14·17
+C13,0·4·7·10·14·17·21,[object Object],0·4·7·10·14·21
+C7b9,0·4·7·10·13,[object Object],0·4·7·10·13
+C7#9,0·4·7·10·15,[object Object],0·4·7·10·15
+Caug,0·4·8,[object Object],0·4·8
+C+,🤷 ,[object Object],0·4·8
+Cdim,🤷 ,[object Object],0·3·6
+C°,0·3·6,[object Object],0·3·6
+Cm7b5,🤷 ,[object Object],0·3·6·10
+C∅,🤷 ,[object Object],
+C6/9,🤷 ,[object Object],0·4·7·9·14
+C6add9,0·4·7·9·14,[object Object],0·4·7·9·14
+Cmaj7#11,🤷 ,[object Object],0·4·7·11·18
+C7alt,🤷 ,[object Object],0·4·8·10·15
