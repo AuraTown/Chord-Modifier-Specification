@@ -1,4 +1,4 @@
-import { chordModifiers } from "../data/chordModifiers";
+import { chordModifiers } from "../../data/chordModifiers.js";
 
 /**
  * Prepares modifier patterns for efficient matching by:
@@ -35,8 +35,9 @@ function prepareModifierPatterns(modifiers) {
  * Parses a chord symbol into its constituent parts using the provided modifier rules.
  * Example: "Cmaj7" → { root: "C", modifiers: [...] }
  */
-function parseChordSymbol(chordSymbol, patterns) {
+const parseChordSymbolInternal = function (chordSymbol, patterns) {
   // First extract the root note (A-G with optional sharp/flat)
+
   const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
   if (!rootMatch) {
     throw new Error("Invalid chord: missing root note");
@@ -94,7 +95,7 @@ function parseChordSymbol(chordSymbol, patterns) {
   validateRequirements(modifiers);
 
   return { root, modifiers };
-}
+};
 
 /**
  * Validates that a new modifier can be added given what's already been collected.
@@ -147,6 +148,151 @@ function validateRequirements(modifiers) {
       }
     }
   }
+}
+
+/////
+
+/**
+ * Converts a semitone number to an interval name
+ * e.g., 4 -> "M3" (major third), 3 -> "m3" (minor third)
+ */
+const semitonesToInterval = {
+  0: "P1", // Perfect unison
+  1: "m2", // Minor second
+  2: "M2", // Major second
+  3: "m3", // Minor third
+  4: "M3", // Major third
+  5: "P4", // Perfect fourth
+  6: "TT", // Tritone
+  7: "P5", // Perfect fifth
+  8: "m6", // Minor sixth
+  9: "M6", // Major sixth
+  10: "m7", // Minor seventh
+  11: "M7", // Major seventh
+  12: "P8", // Perfect octave
+};
+
+/**
+ * Base intervals for a major chord (relative to root)
+ * These get modified based on chord quality and modifiers
+ */
+const baseIntervals = {
+  root: 0, // Root note (always present)
+  third: 4, // Major third
+  fifth: 7, // Perfect fifth
+  seventh: 11, // Major seventh
+  ninth: 14, // Major ninth (compound interval)
+  eleventh: 17, // Perfect eleventh
+  thirteenth: 21, // Major thirteenth
+};
+
+/**
+ * Computes the detailed structure of a chord based on its root and modifiers
+ * @param {Object} chordObject - Contains root note and array of modifiers
+ * @returns {Object} Detailed chord information including intervals
+ */
+function getChordDetails(chordObject) {
+  // Start with a copy of base intervals
+  let intervals = { ...baseIntervals };
+
+  // Track which roles are actually used in the chord
+  const activeRoles = new Set(["root"]);
+
+  // First pass: Apply quality modifiers to establish basic chord structure
+  const qualityMod = chordObject.modifiers.find(
+    (m) => m.category === "quality"
+  );
+  if (qualityMod) {
+    if (Array.isArray(qualityMod.AffectedRole)) {
+      qualityMod.AffectedRole.forEach((role, idx) => {
+        intervals[role] += qualityMod.Operation[idx];
+        activeRoles.add(role);
+      });
+    } else {
+      intervals[qualityMod.AffectedRole] += qualityMod.Operation;
+      activeRoles.add(qualityMod.AffectedRole);
+    }
+  } else {
+    // If no quality modifier, assume major
+    activeRoles.add("third");
+    activeRoles.add("fifth");
+  }
+
+  // Handle suspensions (these replace the third)
+  const susModifier = chordObject.modifiers.find(
+    (m) => m.category === "suspension"
+  );
+  if (susModifier) {
+    activeRoles.delete("third");
+    if (susModifier.Operation === "replace_4") {
+      intervals.third = 5; // Perfect fourth
+    } else if (susModifier.Operation === "replace_2") {
+      intervals.third = 2; // Major second
+    }
+    activeRoles.add("third");
+  }
+
+  // Handle extensions (7ths)
+  const extensionMod = chordObject.modifiers.find(
+    (m) => m.category === "extension"
+  );
+  if (extensionMod) {
+    const [operation, value] = extensionMod.Operation.split(",");
+    if (operation === "add") {
+      intervals.seventh += parseInt(value);
+      activeRoles.add("seventh");
+    }
+  }
+
+  // Handle additions (add9, add11, etc.)
+  const addModifiers = chordObject.modifiers.filter(
+    (m) => m.category === "addition"
+  );
+  for (const mod of addModifiers) {
+    activeRoles.add(mod.AffectedRole);
+  }
+
+  // Finally, apply alterations (♭5, ♯9, etc.)
+  const alterationMods = chordObject.modifiers.filter(
+    (m) => m.category === "alteration"
+  );
+  for (const mod of alterationMods) {
+    intervals[mod.AffectedRole] += mod.Operation;
+    activeRoles.add(mod.AffectedRole);
+  }
+
+  // Convert semitones to interval names, but only for active roles
+  const intervalNames = {};
+  for (const role of activeRoles) {
+    const semitones = intervals[role] % 12; // Normalize to within an octave
+    intervalNames[role] = semitonesToInterval[semitones];
+  }
+
+  return {
+    root: chordObject.root,
+    intervals: intervalNames,
+    semitones: Object.fromEntries(
+      Array.from(activeRoles).map((role) => [role, intervals[role]])
+    ),
+    modifiers: chordObject.modifiers,
+  };
+}
+
+/////
+
+let DEFAULT_PATTENRS = [];
+function getDefaultPattern() {
+  if (DEFAULT_PATTENRS.length === 0) {
+    DEFAULT_PATTENRS = prepareModifierPatterns(chordModifiers);
+  }
+  return DEFAULT_PATTENRS;
+}
+
+export function parseChordSymbol(chordSymbol, patterns = getDefaultPattern()) {
+  // We load the default patterns from the lib on first use, if none are passed.
+  const c = parseChordSymbolInternal(chordSymbol, patterns);
+  const d = getChordDetails(c);
+  return d;
 }
 
 // Prepare patterns once at startup

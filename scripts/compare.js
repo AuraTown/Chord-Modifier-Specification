@@ -61,6 +61,7 @@ function parseTonalChord(c) {
 
 import { enkerliQualities } from "../data/enkerliQualities.js";
 import { parseEnkerliChord } from "../src/lib/enkerliParser.js";
+import { parseChordSymbol } from "../src/lib/auraChordParser.js";
 
 function parseEnkerli(c) {
   try {
@@ -69,7 +70,27 @@ function parseEnkerli(c) {
     let remaining = c.slice(root.length);
     //let data = enkerliQualities[remaining];
     let data = parseEnkerliChord(c);
-    console.log(data);
+    // console.log(data);
+    if (!data) return "🤷 ";
+    let i = data.intervals;
+
+    let semi = i.map((x) => namedIntervalSemitones[x]);
+    //  console.log(i, semi);
+    return semi;
+    return data;
+  } catch (e) {
+    return "error + " + e;
+  }
+}
+
+function parseAura(c) {
+  try {
+    //this is a dict, so we can use the key to get the value. Maybe match from the end, then we're left with the root or shash roots?
+    let root = c.match(/^[a-g][#b]?/i)?.[0] || "";
+    let remaining = c.slice(root.length);
+    //let data = enkerliQualities[remaining];
+    let data = parseChordSymbol(c);
+    console.log("parseChordSymbol = ", c, data);
     if (!data) return "🤷 ";
     let i = data.intervals;
 
@@ -78,6 +99,7 @@ function parseEnkerli(c) {
     return semi;
     return data;
   } catch (e) {
+    console.log(e);
     return "error + " + e;
   }
 }
@@ -181,7 +203,7 @@ async function compareChordParsers() {
   const results = testChords.map((chord) => ({
     input: chord,
     enkerliMatch: parseEnkerli(chord),
-    customParse: parseChord(chord),
+    aura: parseAura(chord),
     tonaljs: parseTonalChord(chord),
   }));
 
@@ -190,17 +212,18 @@ async function compareChordParsers() {
     // .join("·"); for all props
     return {
       input: x.input,
-      enkerli: formatIntervalArray(x.enkerliMatch),
-      custom: formatIntervalArray(x.customParse),
+
+      aura: formatIntervalArray(x.aura),
       tonal: formatIntervalArray(x.tonaljs),
+      enkerli: formatIntervalArray(x.enkerliMatch),
     };
   });
   // Display results in console
 
   resultsJoineed = resultsJoineed.map((c) => {
     c.tonalEnkerli = c.enkerli == c.tonal ? "✅" : "❌";
-    c.tonalCustom = c.custom == c.tonal ? "✅" : "❌";
-    c.enkerliCustom = c.custom == c.enkerli ? "✅" : "❌";
+    c.tonalAura = c.aura == c.tonal ? "✅" : "❌";
+    c.auraEnkerli = c.enkerli == c.aura ? "✅" : "❌";
     return c;
   });
 
