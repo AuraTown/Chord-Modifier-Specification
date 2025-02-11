@@ -90,6 +90,329 @@
 - Replace operations substitute for existing notes
 
 
+
+# Js logic - using the table 
+```
+import { chordModifiers } from './modifierRules';
+
+/**
+ * Prepares modifier patterns for efficient matching by:
+ * 1. Converting symbols and aliases into regex patterns
+ * 2. Sorting patterns by length for longest-match-first principle
+ * 3. Grouping patterns by category for validation
+ */
+function prepareModifierPatterns(modifiers) {
+    // Group all possible symbols and aliases for each modifier
+    const patternsWithMetadata = modifiers.flatMap(modifier => {
+        // Create patterns from both the main symbol and all aliases
+        const allSymbols = [modifier.Symbol, ...(modifier.Aliases?.split(',') || [])];
+        
+        return allSymbols.map(symbol => ({
+            // Escape special regex characters and create pattern
+            pattern: new RegExp(`^${symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+            length: symbol.length,
+            // Keep all original modifier metadata for later use
+            metadata: modifier
+        }));
+    });
+
+    // Sort by length (descending) to ensure longest matches are tried first
+    return patternsWithMetadata.sort((a, b) => b.length - a.length);
+}
+
+/**
+ * Parses a chord symbol into its constituent parts using the provided modifier rules.
+ * Example: "Cmaj7" → { root: "C", modifiers: [...] }
+ */
+function parseChordSymbol(chordSymbol, patterns) {
+    // First extract the root note (A-G with optional sharp/flat)
+    const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
+    if (!rootMatch) {
+        throw new Error('Invalid chord: missing root note');
+    }
+
+    const root = rootMatch[0];
+    let remaining = chordSymbol.slice(root.length);
+    const modifiers = [];
+
+    // Keep track of used categories and affected roles for validation
+    const usedCategories = new Set();
+    const affectedRoles = new Set();
+
+    // Main parsing loop - continue until no text remains
+    while (remaining.length > 0) {
+        let matchFound = false;
+
+        // Try each pattern in order (longest first)
+        for (const { pattern, metadata } of patterns) {
+            const match = remaining.match(pattern);
+            if (match) {
+                // Validate this modifier against what we've already collected
+                validateNewModifier(metadata, usedCategories, affectedRoles);
+
+                // Store the modifier with its complete metadata
+                modifiers.push({
+                    type: metadata.Symbol,
+                    category: metadata.Category,
+                    role: metadata.AffectedRole,
+                    operation: metadata.Operation,
+                    requirements: metadata.Requires
+                });
+
+                // Update our tracking sets
+                usedCategories.add(metadata.Category);
+                if (Array.isArray(metadata.AffectedRole)) {
+                    metadata.AffectedRole.forEach(role => affectedRoles.add(role));
+                } else {
+                    affectedRoles.add(metadata.AffectedRole);
+                }
+
+                // Remove the matched portion and continue
+                remaining = remaining.slice(match[0].length);
+                matchFound = true;
+                break;
+            }
+        }
+
+        if (!matchFound) {
+            throw new Error(`Unrecognized modifier in chord: ${remaining}`);
+        }
+    }
+
+    // Verify all required modifiers are present
+    validateRequirements(modifiers);
+
+    return { root, modifiers };
+}
+
+/**
+ * Validates that a new modifier can be added given what's already been collected.
+ * Throws errors for invalid combinations.
+ */
+function validateNewModifier(modifier, usedCategories, affectedRoles) {
+    // Check category conflicts
+    if (modifier.Category === 'quality' || modifier.Category === 'suspension') {
+        if (usedCategories.has('quality') || usedCategories.has('suspension')) {
+            throw new Error(
+                `Cannot combine ${modifier.Symbol} with existing quality/suspension modifiers`
+            );
+        }
+    }
+
+    // Check role conflicts
+    if (Array.isArray(modifier.AffectedRole)) {
+        for (const role of modifier.AffectedRole) {
+            if (affectedRoles.has(role)) {
+                throw new Error(`Conflicting modifiers for ${role}`);
+            }
+        }
+    } else if (affectedRoles.has(modifier.AffectedRole)) {
+        throw new Error(`Conflicting modifiers for ${modifier.AffectedRole}`);
+    }
+
+    // Check explicit conflicts from the rules
+    if (modifier.Conflicts) {
+        const conflicts = modifier.Conflicts.split(',');
+        if (conflicts.some(conflict => usedCategories.has(conflict))) {
+            throw new Error(`Invalid combination with ${modifier.Symbol}`);
+        }
+    }
+}
+
+/**
+ * Verifies that all required modifiers are present for the given combination.
+ * Example: ♯11 requires a seventh chord.
+ */
+function validateRequirements(modifiers) {
+    for (const modifier of modifiers) {
+        if (modifier.requirements) {
+            const required = modifier.requirements.split(',');
+            for (const req of required) {
+                if (!modifiers.some(mod => 
+                    mod.type === req || mod.category === req
+                )) {
+                    throw new Error(
+                        `${modifier.type} requires ${req} to be present`
+                    );
+                }
+            }
+        }
+    }
+}
+
+// Prepare patterns once at startup
+const patterns = prepareModifierPatterns(chordModifiers);
+
+// Example usage:
+try {
+    console.log(parseChordSymbol('Cmaj7', patterns));
+    console.log(parseChordSymbol('Dm7b5', patterns));
+    console.log(parseChordSymbol('Gsus4add9', patterns));
+} catch (error) {
+    console.error('Error parsing chord:', error.message);
+}
+
+```
+
+# Pseudocode - witout using the table - to show how it works
+
+```
+function parseChordSymbol(chordSymbol) {
+    // First extract the root note (A-G with optional sharp/flat)
+    const rootMatch = chordSymbol.match(/^[A-G][#b♯♭]?/);
+    if (!rootMatch) {
+        throw new Error('Invalid chord: missing root note');
+    }
+
+    const root = rootMatch[0];
+    let remaining = chordSymbol.slice(root.length);
+    const modifiers = [];
+
+    // Main parsing loop - keep going until no text remains
+    while (remaining.length > 0) {
+        let matchFound = false;
+        
+        // Try matching modifier patterns in order of specificity
+        
+        // 1. Quality modifiers (longest patterns first)
+        if (remaining.match(/^maj/i)) {
+            modifiers.push({ type: 'maj', role: 'third' });
+            remaining = remaining.slice(3);
+            matchFound = true;
+        } else if (remaining.match(/^min/i)) {
+            modifiers.push({ type: 'm', role: 'third' });
+            remaining = remaining.slice(3);
+            matchFound = true;
+        } else if (remaining.match(/^m/)) {
+            modifiers.push({ type: 'm', role: 'third' });
+            remaining = remaining.slice(1);
+            matchFound = true;
+        } else if (remaining.match(/^dim/i)) {
+            modifiers.push({ type: 'dim', roles: ['third', 'fifth'] });
+            remaining = remaining.slice(3);
+            matchFound = true;
+        } else if (remaining.match(/^aug/i)) {
+            modifiers.push({ type: 'aug', role: 'fifth' });
+            remaining = remaining.slice(3);
+            matchFound = true;
+        }
+        
+        // 2. Suspensions (before numeric patterns)
+        else if (remaining.match(/^sus4/i)) {
+            modifiers.push({ type: 'sus4', role: 'third' });
+            remaining = remaining.slice(4);
+            matchFound = true;
+        } else if (remaining.match(/^sus2/i)) {
+            modifiers.push({ type: 'sus2', role: 'third' });
+            remaining = remaining.slice(4);
+            matchFound = true;
+        } else if (remaining.match(/^sus/i)) {
+            modifiers.push({ type: 'sus4', role: 'third' }); // Default sus = sus4
+            remaining = remaining.slice(3);
+            matchFound = true;
+        }
+        
+        // 3. Extensions (check maj7 before 7)
+        else if (remaining.match(/^maj7/i)) {
+            modifiers.push({ type: 'maj7', role: 'seventh' });
+            remaining = remaining.slice(4);
+            matchFound = true;
+        } else if (remaining.match(/^7/)) {
+            modifiers.push({ type: '7', role: 'seventh' });
+            remaining = remaining.slice(1);
+            matchFound = true;
+        }
+        
+        // 4. Add modifiers
+        else if (remaining.match(/^add/i)) {
+            const addMatch = remaining.match(/^add(\d+)/i);
+            if (addMatch) {
+                modifiers.push({ 
+                    type: 'add', 
+                    degree: parseInt(addMatch[1]),
+                    role: `degree${addMatch[1]}` 
+                });
+                remaining = remaining.slice(addMatch[0].length);
+                matchFound = true;
+            }
+        }
+        
+        // 5. Alterations (sharp/flat with numbers)
+        else if (remaining.match(/^[♯#b♭][5679](?!\d)/)) {
+            const altMatch = remaining.match(/^([♯#b♭])(\d+)/);
+            modifiers.push({ 
+                type: 'alteration',
+                accidental: altMatch[1].match(/[♯#]/) ? 'sharp' : 'flat',
+                degree: parseInt(altMatch[2]),
+                role: `degree${altMatch[2]}`
+            });
+            remaining = remaining.slice(2);
+            matchFound = true;
+        }
+
+        // If nothing matched but we still have text, that's an error
+        if (!matchFound) {
+            throw new Error(`Unrecognized modifier: ${remaining}`);
+        }
+    }
+
+    // Quick validation of collected modifiers
+    validateModifierCombination(modifiers);
+
+    return { root, modifiers };
+}
+
+function validateModifierCombination(modifiers) {
+    // Track what roles have been modified
+    const modifiedRoles = new Set();
+    
+    // Track if we've seen quality or suspension modifiers
+    let hasQuality = false;
+    let hasSuspension = false;
+
+    for (const mod of modifiers) {
+        // Check role conflicts
+        if (Array.isArray(mod.roles)) {
+            for (const role of mod.roles) {
+                if (modifiedRoles.has(role)) {
+                    throw new Error(`Conflicting modifiers for ${role}`);
+                }
+                modifiedRoles.add(role);
+            }
+        } else if (mod.role) {
+            if (modifiedRoles.has(mod.role)) {
+                throw new Error(`Conflicting modifiers for ${mod.role}`);
+            }
+            modifiedRoles.add(mod.role);
+        }
+
+        // Check quality/suspension conflicts
+        if (mod.type === 'm' || mod.type === 'maj' || mod.type === 'dim' || mod.type === 'aug') {
+            if (hasQuality || hasSuspension) {
+                throw new Error('Cannot combine multiple quality modifiers');
+            }
+            hasQuality = true;
+        }
+        if (mod.type.startsWith('sus')) {
+            if (hasQuality || hasSuspension) {
+                throw new Error('Cannot combine suspension with quality modifiers');
+            }
+            hasSuspension = true;
+        }
+    }
+}
+
+// Example usage:
+console.log(parseChordSymbol('Cmaj7')); 
+console.log(parseChordSymbol('Dm7b5'));
+console.log(parseChordSymbol('Gsus4add9'));
+
+```
+
+
+
+
+
 -----
 
 # Basic Chord Qualities Reference Table
