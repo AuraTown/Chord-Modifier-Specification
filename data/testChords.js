@@ -36,8 +36,6 @@ export const testChords = [
 
   "C7b9#11",
 
-  "C13#11",
-
   // Suspended chords
   "Csus",
   "Csus4",
@@ -96,6 +94,8 @@ export const testChords = [
   "C7b13",
 
   "C7#9b13",
+
+  "C13#11", //introduced after changing the array logic.
 ];
 
 // Invalid chord combinations for testing error handling

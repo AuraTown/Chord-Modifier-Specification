@@ -141,13 +141,21 @@ function applyOperation(intervals, operation) {
   ChordLogger.operation("Array length before:", result.length);
 
   switch (operation.type) {
+    case "add":
+      // For "add" operations, we don't want to fill in intermediate intervals
+      // We just want to add the specific interval at its position
+      if (index >= result.length) {
+        result[index] = operation.value;
+      } else {
+        // If we're adding at an existing position, we should insert rather than replace
+        result.splice(index, 0, operation.value);
+      }
+      break;
+
     case "replace":
     case "modify":
-    case "add":
+      // For replace and modify operations, we do want to ensure all intermediate intervals exist
       if (index >= result.length) {
-        ChordLogger.operation(
-          `Extending array from ${result.length} to index ${index}`
-        );
         const defaultIntervals = [0, 4, 7, 10, 14, 17, 21];
         while (result.length <= index) {
           result.push(defaultIntervals[result.length] || 0);
@@ -160,19 +168,13 @@ function applyOperation(intervals, operation) {
           new: operation.value,
         });
         result[index] = operation.value;
-      } else if (operation.type === "modify") {
+      } else {
         ChordLogger.operation(`Modifying value at index ${index}:`, {
           old: result[index],
           modification: operation.value,
           new: result[index] + operation.value,
         });
         result[index] += operation.value;
-      } else {
-        ChordLogger.operation(
-          `Adding value at index ${index}:`,
-          operation.value
-        );
-        result[index] = operation.value;
       }
       break;
 
@@ -187,11 +189,13 @@ function applyOperation(intervals, operation) {
       break;
   }
 
-  ChordLogger.operation("Final intervals:", result);
-  ChordLogger.endOperation("Apply Operation");
-  return result;
-}
+  // Remove any undefined values that might have been created
+  const cleanResult = result.filter((interval) => interval !== undefined);
 
+  ChordLogger.operation("Final intervals:", cleanResult);
+  ChordLogger.endOperation("Apply Operation");
+  return cleanResult;
+}
 function findMatchingModifiers(symbols) {
   ChordLogger.startOperation("Find Matching Modifiers");
   ChordLogger.matcher("Input symbols:", symbols);
