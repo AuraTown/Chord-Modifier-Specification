@@ -5,6 +5,21 @@ import { createObjectCsvWriter } from "csv-writer";
 
 import { namedIntervalSemitones } from "../data/basic.js";
 
+import {
+  testChords,
+  invalidChords,
+  allTestChords,
+} from "../data/testChords.js";
+
+import { enkerliQualities } from "../data/enkerliQualities.js";
+import { parseEnkerliChord } from "../src/lib/enkerliParser.js";
+import { parseChordSymbol } from "../src/lib/auraChordParser.js";
+
+import {
+  transformChord,
+  testImprovedParser,
+} from "../src/lib/auraChordParser2.js";
+
 /*
 const namedIntervalSemitones = {
   // show munber of semitones
@@ -59,10 +74,6 @@ function parseTonalChord(c) {
   return semi; //  .join("·");
 }
 
-import { enkerliQualities } from "../data/enkerliQualities.js";
-import { parseEnkerliChord } from "../src/lib/enkerliParser.js";
-import { parseChordSymbol } from "../src/lib/auraChordParser.js";
-
 function parseEnkerli(c) {
   try {
     //this is a dict, so we can use the key to get the value. Maybe match from the end, then we're left with the root or shash roots?
@@ -103,45 +114,6 @@ function parseAura(c) {
     return "error + " + e;
   }
 }
-
-// Test chord array with various types
-export const testChords = [
-  // Basic major chords and extensions
-  "Cmaj",
-  "CM",
-  "Cmaj7",
-  "CM7",
-  "Cmaj9",
-  "Cmaj11",
-  "Cmaj13",
-  // Minor chords and extensions
-  "Cm",
-  "Cmin",
-  "Cm7",
-  "Cmin7",
-  "Cm9",
-  "Cm11",
-  "Cm13",
-  // Dominant chords
-  "C7",
-  "C9",
-  "C11",
-  "C13",
-  "C7b9",
-  "C7#9",
-  // Augmented and diminished
-  "Caug",
-  "C+",
-  "Cdim",
-  "C°",
-  "Cm7b5",
-  "C∅",
-  // Complex extensions
-  "C6/9",
-  "C6add9",
-  "Cmaj7#11",
-  "C7alt",
-];
 
 // Enkeli chord qualities dictionary
 const chordQualities = {
@@ -200,7 +172,7 @@ function formatIntervalArray(intervals) {
 
 // Function to run comparisons and generate results
 async function compareChordParsers() {
-  const results = testChords.map((chord) => ({
+  const results = allTestChords.map((chord) => ({
     input: chord,
     enkerliMatch: parseEnkerli(chord),
     aura: parseAura(chord),
@@ -229,6 +201,18 @@ async function compareChordParsers() {
 
   console.table(resultsJoineed);
 
+  /// aura tabs
+
+  const auraTable = results.map((x) => {
+    return {
+      input: x.input,
+      aura: x.aura,
+    };
+  });
+
+  console.table(auraTable);
+
+  console.log(testImprovedParser());
   // Save to CSV
   const csvWriter = createObjectCsvWriter({
     path: "chord-parsing-results.csv",

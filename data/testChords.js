@@ -99,3 +99,5 @@ export const invalidChords = [
   "C/H", // Invalid slash note
   "Cm/B#", // Invalid enharmonic
 ];
+
+export const allTestChords = [...testChords, ...invalidChords];
