@@ -91,9 +91,12 @@ export const testChords = [
   "C7b13",
 
   "C7#9b13",
-  "C13",
+
   "C11",
+  "C13",
   "C13#11", //introduced after changing the array logic.
+
+  "C13#13",
 ];
 
 // Invalid chord combinations for testing error handling
