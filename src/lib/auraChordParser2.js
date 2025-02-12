@@ -16,12 +16,6 @@ const ROLE_TO_INDEX = {
   thirteenth: 6,
 };
 
-/**
- * Apply a single operation to the intervals array
- * @param {Array<number>} intervals - Current intervals
- * @param {Object} operation - Operation to apply
- * @returns {Array<number>} Modified intervals
- */
 function applyOperation(intervals, operation) {
   const result = [...intervals];
   const index = ROLE_TO_INDEX[operation.role];
@@ -61,11 +55,6 @@ function applyOperation(intervals, operation) {
   return result;
 }
 
-/**
- * Find modifiers that match the given symbols
- * @param {Array<string>} symbols - Array of modifier symbols to match
- * @returns {Array} Matched modifiers with their operations
- */
 function findMatchingModifiers(symbols) {
   const matches = [];
 
@@ -86,12 +75,6 @@ function findMatchingModifiers(symbols) {
   return matches.sort((a, b) => a.priority - b.priority);
 }
 
-/**
- * Process a set of operations on intervals
- * @param {Array<number>} intervals - Starting intervals
- * @param {Array} operations - Array of operations to apply
- * @returns {Object} Result with intervals and logs
- */
 function processOperations(intervals, operations) {
   const logs = [];
   let result = [...intervals];
@@ -128,11 +111,6 @@ export function transformChord(modifiers, startingIntervals = [0, 4, 7]) {
 export function formatIntervals(intervals) {
   return intervals.join("·");
 }
-
-// Example usage:
-/*
-
-*/
 
 export function testImprovedParser() {
   const testCases = [

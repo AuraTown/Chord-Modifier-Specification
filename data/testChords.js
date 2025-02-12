@@ -1,6 +1,7 @@
 // Test array of chord symbols for parser validation
 export const testChords = [
   // Basic major chords and extensions
+  "Cm",
   "Cmaj",
   "CM",
   "Cmaj7",

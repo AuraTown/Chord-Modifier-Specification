@@ -20,6 +20,8 @@ import {
   testImprovedParser,
 } from "../src/lib/auraChordParser2.js";
 
+import { parseAuraChord3, test3 } from "../src/lib/auraChordParser3.js";
+
 /*
 const namedIntervalSemitones = {
   // show munber of semitones
@@ -100,12 +102,12 @@ function parseAura(c) {
     let root = c.match(/^[a-g][#b]?/i)?.[0] || "";
     let remaining = c.slice(root.length);
     //let data = enkerliQualities[remaining];
-    let data = parseChordSymbol(c);
+    let data = parseAuraChord3(c);
     console.log("parseChordSymbol = ", c, data);
     if (!data) return "🤷 ";
-    let i = data.intervals;
+    return data.intervals;
 
-    let semi = i.map((x) => namedIntervalSemitones[x]);
+    //let semi = i.map((x) => namedIntervalSemitones[x]);
     console.log(i, semi);
     return semi;
     return data;
@@ -193,6 +195,17 @@ async function compareChordParsers() {
   // Display results in console
 
   resultsJoineed = resultsJoineed.map((c) => {
+    const d = {
+      input: c.input,
+      aura: c.aura,
+      tonalAura: c.tonal == c.aura ? "✅" : "❌",
+      tonal: c.tonal,
+      enkerli: c.enkerli,
+      tonalEnkerli: c.tonal == c.enkerli ? "✅" : "❌",
+      auraEnkerli: c.aura == c.enkerli ? "✅" : "❌",
+    };
+    return d;
+
     c.tonalEnkerli = c.enkerli == c.tonal ? "✅" : "❌";
     c.tonalAura = c.aura == c.tonal ? "✅" : "❌";
     c.auraEnkerli = c.enkerli == c.aura ? "✅" : "❌";
@@ -210,9 +223,11 @@ async function compareChordParsers() {
     };
   });
 
-  console.table(auraTable);
+  // console.table(auraTable);
 
   console.log(testImprovedParser());
+
+  test3();
   // Save to CSV
   const csvWriter = createObjectCsvWriter({
     path: "chord-parsing-results.csv",
