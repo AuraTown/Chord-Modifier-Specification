@@ -134,7 +134,11 @@ export const modifierSchema = {
       symbols: ["11"],
       operations: [
         {
-          type: OperationType.ADD,
+          type: OperationType.REMOVE, // First remove the third
+          role: ChordRole.THIRD,
+        },
+        {
+          type: OperationType.ADD, // Then add the extensions
           role: ChordRole.SEVENTH,
           value: 10,
         },
@@ -164,6 +168,7 @@ export const modifierSchema = {
           role: ChordRole.NINTH,
           value: 14,
         },
+
         {
           type: OperationType.ADD,
           role: ChordRole.THIRTEENTH,
@@ -247,11 +252,21 @@ export const modifierSchema = {
     },
     {
       symbols: ["#11", "♯11", "+11"],
-      operation: {
-        type: OperationType.MODIFY,
-        role: ChordRole.ELEVENTH,
-        value: 1,
-      },
+      operations: [
+        //No sure if we should explicitely ADD it here, when mentionned...
+        /*
+        {
+          type: OperationType.ADD,
+          role: ChordRole.ELEVENTH,
+          value: 17,
+        },
+        */
+        {
+          type: OperationType.MODIFY,
+          role: ChordRole.ELEVENTH,
+          value: 1,
+        },
+      ],
       priority: 4,
       requires: ["extension.7"],
     },

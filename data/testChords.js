@@ -87,14 +87,12 @@ export const testChords = [
   "Cm13",
   "Cm9b5",
 
-  "C11",
-  "C13",
-
   "C7#11",
   "C7b13",
 
   "C7#9b13",
-
+  "C13",
+  "C11",
   "C13#11", //introduced after changing the array logic.
 ];
 
