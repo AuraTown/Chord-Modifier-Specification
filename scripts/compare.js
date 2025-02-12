@@ -169,7 +169,7 @@ function formatIntervalArray(intervals) {
 
 // Function to run comparisons and generate results
 async function compareChordParsers() {
-  const results = allTestChords.map((chord) => ({
+  const results = testChords.map((chord) => ({
     input: chord,
     enkerliMatch: parseEnkerli(chord),
     aura: parseAura(chord),
@@ -222,7 +222,7 @@ async function compareChordParsers() {
 
   //console.log(testImprovedParser());
 
-  test3();
+  // test3();
   // Save to CSV
   const csvWriter = createObjectCsvWriter({
     path: "chord-parsing-results.csv",
