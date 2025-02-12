@@ -60,3 +60,30 @@ export const namedIntervalSemitones = {
   14: 23, // Major fourteenth
   15: 24, // Perfect double octave
 };
+
+export const baseIntervals = {
+  root: 0, // Root note (always present)
+  third: 4, // Major third
+  fifth: 7, // Perfect fifth
+  seventh: 11, // Major seventh
+  ninth: 14, // Major ninth
+  eleventh: 17, // Perfect eleventh
+  thirteenth: 21, // Major thirteenth
+};
+
+// Mapping of semitones to interval names
+export const semitonesToInterval = {
+  0: "P1", // Perfect unison
+  1: "m2", // Minor second
+  2: "M2", // Major second
+  3: "m3", // Minor third
+  4: "M3", // Major third
+  5: "P4", // Perfect fourth
+  6: "TT", // Tritone
+  7: "P5", // Perfect fifth
+  8: "m6", // Minor sixth
+  9: "M6", // Major sixth
+  10: "m7", // Minor seventh
+  11: "M7", // Major seventh
+  12: "P8", // Perfect octave
+};

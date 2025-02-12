@@ -1,5 +1,7 @@
 import { chordModifiers } from "../../data/chordModifiers.js";
 
+import { baseIntervals, semitonesToInterval } from "../../data/basic.js";
+
 /**
  * Prepares modifier patterns for efficient matching by:
  * 1. Converting symbols and aliases into regex patterns
@@ -13,7 +15,10 @@ function prepareModifierPatterns(modifiers) {
     const allSymbols = [
       modifier.Symbol,
       ...(modifier.Aliases?.split(",") || []),
-    ].map((s) => s.trim());
+    ]
+      .map((s) => s.trim())
+      //remove empty strings
+      .filter((s) => s.length > 0);
 
     console.log(`\n📝 Processing modifier: ${modifier.Symbol}`);
     console.log(`   Category: ${modifier.Category}`);
@@ -330,12 +335,42 @@ function getChordDetails(chordObject) {
     intervalNames[role] = semitonesToInterval[semitones];
   }
 
+  /*
+
+  intervals: { root: 'P1', third: 'm3', fifth: 'TT' },
+  semitones: { root: 0, third: 3, fifth: 6 },
+
+  */
+
+  const semitonesObj = Object.fromEntries(
+    Array.from(activeRoles).map((role) => [role, intervals[role]])
+  );
+  //intervals should be an array of number, where root it 0
+
+  // Create the intervals array
+
+  // Create the intervals array in the correct order
+  const defaultOrder = [
+    "root",
+    "third",
+    "fifth",
+    "seventh",
+    "ninth",
+    "eleventh",
+    "thirteenth",
+  ];
+
+  // Filter to only include active roles and map to their interval values
+  const intervalsArray = defaultOrder
+    .filter((role) => activeRoles.has(role))
+    .map((role) => intervals[role] % 12); // Normalize to within an octave
+
   const result = {
     root: chordObject.root,
-    intervals: intervalNames,
-    semitones: Object.fromEntries(
-      Array.from(activeRoles).map((role) => [role, intervals[role]])
-    ),
+    intervalNames,
+    semitonesObj,
+    intervalsObj: intervals,
+    intervals: intervalsArray,
     modifiers: chordObject.modifiers,
   };
 
