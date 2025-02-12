@@ -211,14 +211,16 @@ async function compareChordParsers() {
 
   /// aura tabs
 
-  const auraTable = results.map((x) => {
+  const auraTable = resultsJoineed.map((c) => {
     return {
-      input: x.input,
-      aura: x.aura,
+      input: c.input,
+      aura: c.aura,
+      tonalAura: c.tonal == c.aura ? "✅" : "❌",
+      tonal: c.tonal,
     };
   });
 
-  // console.table(auraTable);
+  console.table(auraTable);
 
   //console.log(testImprovedParser());
 

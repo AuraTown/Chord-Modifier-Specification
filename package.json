@@ -11,6 +11,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "compare": "node scripts/compare.js"
+    "compare": "node scripts/compare.js",
+    "chord": "node scripts/cliChord.js"
   }
 }
