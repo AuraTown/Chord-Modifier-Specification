@@ -2,6 +2,28 @@ import { modifierSchema } from "../../data/chordModifiers2.js";
 
 import { ChordLogger, LogConfig } from "./chordLogger.js";
 
+// Define the roles and their corresponding semitone values from root
+const INTERVAL_MAP = {
+  root: 0,
+  third: 4,
+  fifth: 7,
+  seventh: 10,
+  ninth: 14,
+  eleventh: 17,
+  thirteenth: 21,
+};
+
+// Map for role ordering to maintain correct interval sequence
+const ROLE_ORDER = [
+  "root",
+  "third",
+  "fifth",
+  "seventh",
+  "ninth",
+  "eleventh",
+  "thirteenth",
+];
+
 /**
  * Converts a modifier symbol to a regex-safe pattern
  * @param {string} symbol - Modifier symbol
@@ -134,68 +156,61 @@ function applyOperation(intervals, operation) {
   ChordLogger.operation("Operation details:", operation);
   ChordLogger.operation("Initial intervals:", intervals);
 
-  const result = [...intervals];
-  const index = ROLE_TO_INDEX[operation.role];
-
-  ChordLogger.operation(`Target index for ${operation.role}:`, index);
-  ChordLogger.operation("Array length before:", result.length);
+  // Convert intervals array to a Map to handle sparse positions
+  const intervalMap = new Map(
+    intervals.map((value, index) => [ROLE_ORDER[index], value])
+  );
 
   switch (operation.type) {
-    case "add":
-      // For "add" operations, we don't want to fill in intermediate intervals
-      // We just want to add the specific interval at its position
-      if (index >= result.length) {
-        result[index] = operation.value;
-      } else {
-        // If we're adding at an existing position, we should insert rather than replace
-        result.splice(index, 0, operation.value);
-      }
+    case "add": {
+      // For add operations, we simply add the interval at its position
+      // without filling intermediate values
+      intervalMap.set(operation.role, operation.value);
       break;
+    }
 
-    case "replace":
-    case "modify":
-      // For replace and modify operations, we do want to ensure all intermediate intervals exist
-      if (index >= result.length) {
-        const defaultIntervals = [0, 4, 7, 10, 14, 17, 21];
-        while (result.length <= index) {
-          result.push(defaultIntervals[result.length] || 0);
+    case "replace": {
+      // For replace, we ensure all intervals up to this point exist
+      const roleIndex = ROLE_ORDER.indexOf(operation.role);
+      for (let i = 0; i <= roleIndex; i++) {
+        const role = ROLE_ORDER[i];
+        if (!intervalMap.has(role)) {
+          intervalMap.set(role, INTERVAL_MAP[role]);
         }
       }
-
-      if (operation.type === "replace") {
-        ChordLogger.operation(`Replacing value at index ${index}:`, {
-          old: result[index],
-          new: operation.value,
-        });
-        result[index] = operation.value;
-      } else {
-        ChordLogger.operation(`Modifying value at index ${index}:`, {
-          old: result[index],
-          modification: operation.value,
-          new: result[index] + operation.value,
-        });
-        result[index] += operation.value;
-      }
+      intervalMap.set(operation.role, operation.value);
       break;
+    }
 
-    case "remove":
-      if (index < result.length) {
-        ChordLogger.operation(
-          `Removing value at index ${index}:`,
-          result[index]
-        );
-        result.splice(index, 1);
+    case "modify": {
+      // For modify, ensure the interval exists before modifying
+      if (!intervalMap.has(operation.role)) {
+        intervalMap.set(operation.role, INTERVAL_MAP[operation.role]);
       }
+      const currentValue = intervalMap.get(operation.role);
+      intervalMap.set(operation.role, currentValue + operation.value);
       break;
+    }
+
+    case "remove": {
+      intervalMap.delete(operation.role);
+      break;
+    }
   }
 
-  // Remove any undefined values that might have been created
-  const cleanResult = result.filter((interval) => interval !== undefined);
+  // Convert back to array, maintaining only the necessary intervals
+  const result = [];
+  for (const role of ROLE_ORDER) {
+    if (intervalMap.has(role)) {
+      result.push(intervalMap.get(role));
+    }
+  }
 
-  ChordLogger.operation("Final intervals:", cleanResult);
+  ChordLogger.operation("Final intervals:", result);
   ChordLogger.endOperation("Apply Operation");
-  return cleanResult;
+  return result;
 }
+
 function findMatchingModifiers(symbols) {
   ChordLogger.startOperation("Find Matching Modifiers");
   ChordLogger.matcher("Input symbols:", symbols);
