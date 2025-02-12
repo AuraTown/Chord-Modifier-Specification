@@ -1,5 +1,7 @@
 import { modifierSchema } from "../../data/chordModifiers2.js";
 
+import { ChordLogger, LogConfig } from "./chordLogger.js";
+
 /**
  * Converts a modifier symbol to a regex-safe pattern
  * @param {string} symbol - Modifier symbol
@@ -87,6 +89,8 @@ export function detectChordModifiers(chordString) {
  * @returns {Object} Parsed chord information
  */
 export function parseAuraChord3(chordString) {
+  console.log("===========================================");
+  console.log("======================" + chordString + "=====================");
   // Extract root note
   const rootMatch = chordString.match(/^[A-G][#b]?/);
   const rootNote = rootMatch ? rootMatch[0] : null;
@@ -106,10 +110,12 @@ export function parseAuraChord3(chordString) {
   return {
     input: chordString,
     root: rootNote,
+
     foundModifiers: detectedModifiers,
     appliedOperations: logs.map((log) => log.operation),
     intervals: intervals,
     formatted: formatIntervals(intervals),
+    logs,
   };
 }
 
@@ -124,52 +130,78 @@ const ROLE_TO_INDEX = {
 };
 
 function applyOperation(intervals, operation) {
+  ChordLogger.startOperation("Apply Operation");
+  ChordLogger.operation("Operation details:", operation);
+  ChordLogger.operation("Initial intervals:", intervals);
+
   const result = [...intervals];
   const index = ROLE_TO_INDEX[operation.role];
 
+  ChordLogger.operation(`Target index for ${operation.role}:`, index);
+  ChordLogger.operation("Array length before:", result.length);
+
   switch (operation.type) {
     case "replace":
-      // Ensure array is long enough
-      while (result.length <= index) {
-        result.push(0);
-      }
-      result[index] = operation.value;
-      break;
-
     case "modify":
-      // Ensure array is long enough
-      while (result.length <= index) {
-        result.push(0);
-      }
-      result[index] += operation.value;
-      break;
-
     case "add":
-      // Ensure array is long enough
-      while (result.length <= index) {
-        result.push(0);
+      if (index >= result.length) {
+        ChordLogger.operation(
+          `Extending array from ${result.length} to index ${index}`
+        );
+        const defaultIntervals = [0, 4, 7, 10, 14, 17, 21];
+        while (result.length <= index) {
+          result.push(defaultIntervals[result.length] || 0);
+        }
       }
-      result[index] = operation.value;
+
+      if (operation.type === "replace") {
+        ChordLogger.operation(`Replacing value at index ${index}:`, {
+          old: result[index],
+          new: operation.value,
+        });
+        result[index] = operation.value;
+      } else if (operation.type === "modify") {
+        ChordLogger.operation(`Modifying value at index ${index}:`, {
+          old: result[index],
+          modification: operation.value,
+          new: result[index] + operation.value,
+        });
+        result[index] += operation.value;
+      } else {
+        ChordLogger.operation(
+          `Adding value at index ${index}:`,
+          operation.value
+        );
+        result[index] = operation.value;
+      }
       break;
 
     case "remove":
       if (index < result.length) {
+        ChordLogger.operation(
+          `Removing value at index ${index}:`,
+          result[index]
+        );
         result.splice(index, 1);
       }
       break;
   }
 
+  ChordLogger.operation("Final intervals:", result);
+  ChordLogger.endOperation("Apply Operation");
   return result;
 }
 
 function findMatchingModifiers(symbols) {
+  ChordLogger.startOperation("Find Matching Modifiers");
+  ChordLogger.matcher("Input symbols:", symbols);
+
   const matches = [];
 
-  // Search through each category in the schema
   for (const [category, modifiers] of Object.entries(modifierSchema)) {
     for (const modifier of modifiers) {
-      // Check if any of the modifier's symbols match
       if (symbols.some((symbol) => modifier.symbols.includes(symbol))) {
+        ChordLogger.matcher(`Found match in ${category}:`, modifier);
         matches.push({
           ...modifier,
           category,
@@ -178,15 +210,23 @@ function findMatchingModifiers(symbols) {
     }
   }
 
-  // Sort by priority
-  return matches.sort((a, b) => a.priority - b.priority);
+  const sortedMatches = matches.sort((a, b) => a.priority - b.priority);
+  ChordLogger.matcher("Sorted matches:", sortedMatches);
+  ChordLogger.endOperation("Find Matching Modifiers");
+  return sortedMatches;
 }
 
 function processOperations(intervals, operations) {
+  ChordLogger.startOperation("Process Operations");
+  ChordLogger.transform("Initial intervals:", intervals);
+  ChordLogger.transform("Operations to process:");
+  console.log(operations);
+
   const logs = [];
   let result = [...intervals];
 
-  for (const operation of operations) {
+  operations.forEach((operation, i) => {
+    ChordLogger.transform(`Processing operation ${i + 1}/${operations.length}`);
     const beforeState = [...result];
     result = applyOperation(result, operation);
     logs.push({
@@ -194,8 +234,10 @@ function processOperations(intervals, operations) {
       before: beforeState,
       after: [...result],
     });
-  }
+  });
 
+  ChordLogger.transform("Final result:", result);
+  ChordLogger.endOperation("Process Operations");
   return { intervals: result, logs };
 }
 

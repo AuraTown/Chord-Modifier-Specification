@@ -15,7 +15,7 @@ import { enkerliQualities } from "../data/enkerliQualities.js";
 import { parseEnkerliChord } from "../src/lib/enkerliParser.js";
 //import { parseChordSymbol } from "../src/lib/auraChordParser_LEGACY.js";
 
-import { parseAuraChord3, test3 } from "../src/lib/auraChordParser3.js";
+import { parseAuraChord3, test3 } from "../src/lib/auraChordParser4.js";
 
 /*
 const namedIntervalSemitones = {
