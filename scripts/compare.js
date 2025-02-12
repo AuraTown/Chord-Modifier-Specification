@@ -13,12 +13,7 @@ import {
 
 import { enkerliQualities } from "../data/enkerliQualities.js";
 import { parseEnkerliChord } from "../src/lib/enkerliParser.js";
-import { parseChordSymbol } from "../src/lib/auraChordParser.js";
-
-import {
-  transformChord,
-  testImprovedParser,
-} from "../src/lib/auraChordParser2.js";
+//import { parseChordSymbol } from "../src/lib/auraChordParser_LEGACY.js";
 
 import { parseAuraChord3, test3 } from "../src/lib/auraChordParser3.js";
 
@@ -225,7 +220,7 @@ async function compareChordParsers() {
 
   // console.table(auraTable);
 
-  console.log(testImprovedParser());
+  //console.log(testImprovedParser());
 
   test3();
   // Save to CSV

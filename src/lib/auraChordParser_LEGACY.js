@@ -1,4 +1,4 @@
-import { chordModifiers } from "../../data/chordModifiers.js";
+import { chordModifiers } from "../../data/chordModifiers_LEGACY.js";
 
 import { baseIntervals, semitonesToInterval } from "../../data/basic.js";
 
